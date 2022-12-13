@@ -7,19 +7,20 @@ import {
   Toolbar,
   IconButton,
   Typography,
-  Menu,
   MenuItem,
   MenuList,
   Grid,
-  Fade,
   Button,
   Chip,
   CircularProgress,
   Stack,
   Divider,
   ListItemText,
+  Drawer,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft"
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight"
 import Image from "next/image"
 import { useRouter } from "next/router"
 import shallow from "zustand/shallow"
@@ -34,6 +35,7 @@ import AccountModal from "./AccountModal"
 import { useHistory } from "../../store/history.store"
 import Balance from "../Balance"
 import ParameterLinks from "./ParameterLinks"
+import WalletDrawer from "./WalletDrawer"
 
 const pages = ["Markets", "Borrow", "Lend", "My positions"]
 if (process.env.NEXT_PUBLIC_APP_ENV === "development") {
@@ -53,6 +55,7 @@ export default function Header() {
   )
   const { palette } = useTheme()
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null)
+  const [isWalletDrawerOpen, setIsWalletDrawerOpen] = useState(false)
   const router = useRouter()
   const currentPage = router.pathname.substring(1) // TODO: Maybe not the best way
 
@@ -79,17 +82,32 @@ export default function Header() {
         <Toolbar disableGutters>
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
-              <Link href="/">
-                <a className={styles.logoTitle}>
-                  <Image
-                    src="/assets/images/logo/logo-title.svg"
-                    alt="Logo Fuji"
-                    width={120}
-                    height={50}
-                    layout="fixed"
+              {isWalletDrawerOpen ? (
+                <Stack
+                  direction="row"
+                  sx={{ width: "50vw" }}
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <KeyboardArrowLeftIcon
+                    color="info"
+                    sx={{ fontSize: "1rem" }}
                   />
-                </a>
-              </Link>
+                  <Typography variant="small">Wallet</Typography>
+                </Stack>
+              ) : (
+                <Link href="/">
+                  <a className={styles.logoTitle}>
+                    <Image
+                      src="/assets/images/logo/logo-title.svg"
+                      alt="Logo Fuji"
+                      width={120}
+                      height={50}
+                      layout="fixed"
+                    />
+                  </a>
+                </Link>
+              )}
             </Grid>
             <Grid item>
               <Box
@@ -102,9 +120,10 @@ export default function Header() {
                 {status === "disconnected" && (
                   <>
                     <Chip
-                      label="Connect wallet"
+                      label={
+                        <Typography variant="body">Connect wallet</Typography>
+                      }
                       variant="gradient"
-                      sx={{ fontSize: "1rem" }}
                       onClick={() => login()}
                     />
                     <Button
@@ -124,6 +143,7 @@ export default function Header() {
                   aria-haspopup="true"
                   color="inherit"
                   onClick={handleOpenNavMenu}
+                  sx={{ ml: "0.75rem", p: 0 }}
                 >
                   {isNavMenuOpen ? (
                     <CloseIcon
@@ -137,53 +157,95 @@ export default function Header() {
                       }}
                     />
                   ) : (
-                    <BurgerMenuIcon />
+                    <Box p=".5rem" width="34px" height="34px">
+                      <BurgerMenuIcon />
+                    </Box>
                   )}
                 </IconButton>
-                <Menu
+
+                <Drawer
                   id="menu-appbar"
-                  anchorEl={anchorElNav}
-                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                  transformOrigin={{ vertical: "top", horizontal: "left" }}
+                  anchor="right"
                   keepMounted
                   open={Boolean(anchorElNav)}
                   onClose={handleCloseNavMenu}
-                  sx={{ display: { xs: "block", lg: "none" } }}
-                  TransitionComponent={Fade}
+                  BackdropProps={{ style: { opacity: 0 } }}
+                  sx={{
+                    display: { xs: "block", lg: "none" },
+                    "& .MuiDrawer-paper": {
+                      width: "100%",
+                      mt: "3.6rem",
+                      background: "black",
+                    },
+                  }}
                 >
-                  <MenuList>
+                  <MenuList sx={{ p: 0 }}>
                     {pages.map((page) => (
-                      <MenuItem key={page} onClick={handleCloseNavMenu}>
+                      <MenuItem
+                        sx={{ py: 0 }}
+                        key={page}
+                        onClick={handleCloseNavMenu}
+                      >
                         <ListItemText>
                           <Link href={`/${page.toLowerCase()}`}>
-                            <Typography variant="small">{page}</Typography>
+                            <Typography
+                              variant="small"
+                              color={palette.info.main}
+                            >
+                              {page}
+                            </Typography>
                           </Link>
                         </ListItemText>
                       </MenuItem>
                     ))}
-                    <MenuItem onClick={handleCloseNavMenu}>
+                    <MenuItem onClick={() => setIsWalletDrawerOpen(true)}>
                       <ListItemText>
                         <Stack direction="row" justifyContent="space-between">
-                          <Typography variant="small">Wallet</Typography>
-                          <Typography variant="small">
-                            {formattedAddress}
+                          <Typography variant="small" color={palette.info.main}>
+                            {status === "disconnected"
+                              ? "Connect wallet"
+                              : "Wallet"}
                           </Typography>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            gap=".25rem"
+                          >
+                            <Typography variant="small">
+                              {formattedAddress}
+                            </Typography>
+                            <KeyboardArrowRightIcon
+                              color="info"
+                              sx={{ fontSize: "1rem" }}
+                            />
+                          </Stack>
                         </Stack>
                       </ListItemText>
                     </MenuItem>
                     <MenuItem onClick={handleCloseNavMenu}>
                       <ListItemText>
                         <Stack direction="row" justifyContent="space-between">
-                          <Typography variant="small">
+                          <Typography variant="small" color={palette.info.main}>
                             Transaction History
                           </Typography>
+                          <KeyboardArrowRightIcon
+                            color="info"
+                            sx={{ fontSize: "1rem" }}
+                          />
                         </Stack>
                       </ListItemText>
                     </MenuItem>
-                    <Divider />
+                    <Divider sx={{ my: "1rem" }} />
                     <ParameterLinks />
                   </MenuList>
-                </Menu>
+                </Drawer>
+
+                <WalletDrawer
+                  isOpen={isWalletDrawerOpen}
+                  onClose={() => setIsWalletDrawerOpen(false)}
+                  address={address as string}
+                  formattedAddress={formattedAddress as string}
+                />
               </Box>
             </Grid>
           </Grid>

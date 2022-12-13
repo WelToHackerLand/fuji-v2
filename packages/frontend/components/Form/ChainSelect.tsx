@@ -57,6 +57,7 @@ export default function ChainSelect() {
               )}
             </Stack>
           }
+          sx={{ maxHeight: { xs: "34px", sm: "" } }}
           onClick={openMenu}
         />
       ) : (
